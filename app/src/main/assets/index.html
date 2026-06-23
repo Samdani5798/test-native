@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Android Bridge Tester</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f14;
+      --surface:   #161a24;
+      --card:      #1e2435;
+      --border:    #2a3050;
+      --accent:    #4f8ef7;
+      --accent2:   #a259f7;
+      --success:   #34d97b;
+      --warn:      #f7a534;
+      --danger:    #f75454;
+      --text:      #e8ecf5;
+      --muted:     #7a85a3;
+      --radius:    14px;
+      --font:      'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1f35 0%, #0d1220 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 18px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+    header h1 span { color: var(--accent); }
+    header p { font-size: .78rem; color: var(--muted); margin-top: 3px; }
+
+    /* Bridge status pill */
+    #bridge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 4px 11px;
+      border-radius: 99px;
+      margin-top: 10px;
+      border: 1px solid;
+    }
+    #bridge-status.ok  { color: var(--success); border-color: #34d97b44; background: #34d97b11; }
+    #bridge-status.err { color: var(--danger);  border-color: #f7545444; background: #f7545411; }
+    #bridge-status .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+    /* ── Sections ── */
+    .section {
+      margin: 18px 14px 0;
+    }
+    .section-label {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      padding-left: 2px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: .88rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .card-desc {
+      font-size: .76rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      padding: 9px 16px;
+      border-radius: 10px;
+      border: none;
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      font-family: var(--font);
+    }
+    .btn:active { opacity: .75; transform: scale(.97); }
+    .btn-primary  { background: var(--accent);  color: #fff; }
+    .btn-purple   { background: var(--accent2); color: #fff; }
+    .btn-success  { background: var(--success); color: #0d1a0f; }
+    .btn-warn     { background: var(--warn);    color: #1a0d00; }
+    .btn-danger   { background: var(--danger);  color: #fff; }
+    .btn-outline  {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    /* ── Result log box ── */
+    .log-box {
+      background: #0a0c12;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-top: 10px;
+      font-size: .74rem;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      color: var(--muted);
+      max-height: 110px;
+      overflow-y: auto;
+      line-height: 1.6;
+      word-break: break-all;
+    }
+    .log-box .ok   { color: var(--success); }
+    .log-box .err  { color: var(--danger); }
+    .log-box .info { color: var(--accent); }
+    .log-box .warn { color: var(--warn); }
+
+    /* ── Slider input ── */
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .input-row label { font-size: .76rem; color: var(--muted); white-space: nowrap; }
+    input[type=range] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+    input[type=number], input[type=text] {
+      background: #0d0f14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: .8rem;
+      padding: 6px 10px;
+      width: 80px;
+      font-family: var(--font);
+    }
+    input[type=text] { width: 100%; }
+
+    /* ── Storage table ── */
+    #storage-display {
+      font-size: .72rem;
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    #storage-display th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 600;
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    #storage-display td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #1e2435;
+      word-break: break-all;
+    }
+    #storage-display tr:last-child td { border-bottom: none; }
+
+    /* ── Location card ── */
+    #loc-display {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .loc-cell {
+      background: #0d0f14;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px;
+      text-align: center;
+    }
+    .loc-cell .val { font-size: 1rem; font-weight: 700; color: var(--accent); }
+    .loc-cell .lbl { font-size: .65rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Icon colours ── */
+    .ic-blue   { background: #1a2f5c; }
+    .ic-purple { background: #2a1a5c; }
+    .ic-green  { background: #0f3020; }
+    .ic-orange { background: #3a2000; }
+    .ic-red    { background: #3a0d0d; }
+    .ic-teal   { background: #0d2e2e; }
+    .ic-yellow { background: #2e2a00; }
+    .ic-pink   { background: #3a0d2e; }
+
+    /* ── Zero Bridge badge ── */
+    .zero-badge {
+      display: inline-block;
+      font-size: .62rem;
+      font-weight: 700;
+      background: #34d97b22;
+      color: var(--success);
+      border: 1px solid #34d97b44;
+      border-radius: 6px;
+      padding: 2px 7px;
+      margin-left: 6px;
+      letter-spacing: .5px;
+    }
+
+    /* ── Video preview ── */
+    #cam-preview {
+      width: 100%;
+      max-height: 160px;
+      border-radius: 10px;
+      background: #0a0c12;
+      margin-top: 10px;
+      object-fit: cover;
+      display: none;
+      border: 1px solid var(--border);
+    }
+    #file-preview {
+      max-width: 100%;
+      max-height: 140px;
+      border-radius: 10px;
+      margin-top: 10px;
+      display: none;
+      border: 1px solid var(--border);
+      object-fit: contain;
+    }
+    /* hidden file input */
+    #file-input { display: none; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 6px 0 14px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header>
+  <h1>🤖 Android <span>Bridge</span> Tester</h1>
+  <p>Sabhi native features ka interactive test</p>
+  <div id="bridge-status">
+    <span class="dot"></span>
+    <span id="bridge-label">Bridge check kar raha hai…</span>
+  </div>
+</header>
+
+<!-- ═══════════════ TOAST ═══════════════ -->
+<div class="section">
+  <div class="section-label">1 · Toast</div>
+  <div class="card">
+    <div class="card-title">
+      <div class="icon ic-orange">💬</div> Native Toast Alert
+    </div>
+    <div class="card-desc">Screen par native Android toast message show karo.</div>
+    <div class="input-row">
+      <label>Message</label>
+      <input type="text" id="toast-msg" value="Hello from WebApp! 👋" />
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-warn" onclick="testToast()">Toast Dikhao</button>
+    </div>
+    <div class="log-box" id="log-toast">Waiting…</div>
+  </div>
+</div>
+
+<!-- ═══════════════ VIBRATION ═══════════════ -->
+<div class="section">
+  <div class="section-label">2 · Vibration</div>
+  <div class="card">
+    <div class="card-title">
+      <div class="icon ic-purple">📳</div> Device Vibration
+    </div>
+    <div class="card-desc">Phone ko vibrate karo — duration ms mein set karo.</div>
+    <div class="input-row">
+      <label>Duration (ms)</label>
+      <input type="range" id="vib-range" min="50" max="1000" step="50" value="200" oninput="document.getElementById('vib-val').value=this.value" />
+      <input type="number" id="vib-val" value="200" min="50" max="1000" oninput="document.getElementById('vib-range').value=this.value" />
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-purple" onclick="testVibrate()">Vibrate Karo</button>
+      <button class="btn btn-outline" onclick="testVibrate(50)">Short (50ms)</button>
+      <button class="btn btn-outline" onclick="testVibrate(1000)">Long (1s)</button>
+    </div>
+    <div class="log-box" id="log-vib">Waiting…</div>
+  </div>
+</div>
+
+<!-- ═══════════════ LOCATION ═══════════════ -->
+<div class="section">
+  <div class="section-label">3 · Location (GPS)</div>
+  <div class="card">
+    <div class="card-title">
+      <div class="icon ic-teal">📍</div> Native GPS Location
+    </div>
+    <div class="card-desc">Dono tarike test karo — bridge call ya standard browser API (auto-intercepted).</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="testLocation()">Bridge: fetchLocation()</button>
+      <button class="btn btn-outline" onclick="testGeoAPI()">🌐 navigator.geolocation</button>
+    </div>
+    <div id="loc-display" style="display:none">
+      <div class="loc-cell">
+        <div class="val" id="loc-lat">—</div>
+        <div class="lbl">Latitude</div>
+      </div>
+      <div class="loc-cell">
+        <div class="val" id="loc-lon">—</div>
+        <div class="lbl">Longitude</div>
+      </div>
+      <div class="loc-cell">
+        <div class="val" id="loc-acc">—</div>
+        <div class="lbl">Accuracy (m)</div>
+      </div>
+      <div class="loc-cell">
+        <div class="val" id="loc-alt">—</div>
+        <div class="lbl">Altitude</div>
+      </div>
+    </div>
+    <div class="log-box" id="log-loc">Waiting…</div>
+  </div>
+</div>
+
+<!-- ═══════════════ CAMERA ═══════════════ -->
+<div class="section">
+  <div class="section-label">4 · Camera</div>
+  <div class="card">
+    <div class="card-title">
+      <div class="icon ic-blue">📷</div> Native Camera
+    </div>
+    <div class="card-desc">Teen tarike test karo — bridge, direct camera capture, ya gallery picker.</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="testCamera()">Bridge: takePicture()</button>
+      <button class="btn btn-success" onclick="document.getElementById('cam-capture-input').click()">📷 Direct Camera</button>
+      <button class="btn btn-outline" onclick="document.getElementById('file-input').click()">🖼️ Gallery</button>
+    </div>
+    <input type="file" id="cam-capture-input" accept="image/*" capture="environment" style="display:none" onchange="onFilePicked(event,'cam')" />
+    <input type="file" id="file-input" accept="image/*" style="display:none" onchange="onFilePicked(event,'gallery')" />
+    <div class="log-box" id="log-cam">Waiting…</div>
+  </div>
+</div>
+
+<!-- ═══════════════ AUDIO ═══════════════ -->
+<div class="section">
+  <div class="section-label">5 · Audio</div>
+  <div class="card">
+    <div class="card-title">
+      <div class="icon ic-green">🔊</div> Native Audio Playback
+    </div>
+    <div class="card-desc">Native ringtones/sounds play karo bina kisi external library ke.</div>
+    <div class="btn-row">
+      <button class="btn btn-success"  onclick="testAudio('bell')">🔔 Bell</button>
+      <button class="btn btn-outline"  onclick="testAudio('beep')">📟 Beep</button>
+      <button class="btn btn-warn"     onclick="testAudio('alert')">⚠️ Alert</button>
+      <button class="btn btn-primary"  onclick="testAudio('success')">✅ Success</button>
+    </div>
+    <div class="log-box" id="log-audio">Waiting…</div>
+  </div>
+</div>
+
+<!-- ═══════════════ ZERO-BRIDGE APIs ═══════════════ -->
+<div class="section">
+  <div class="section-label">5 · Zero-Bridge Auto-Intercept</div>
+  <div class="card">
+    <div class="card-title">
+      <div class="icon ic-pink">⚡</div> Automatic Interception
+      <span class="zero-badge">NO window.Android</span>
+    </div>
+    <div class="card-desc">
+      Yeh standard browser APIs hain — koi bridge call nahi. Android wrapper inhe automatically intercept kar ke native permission aur system dialogs trigger karta hai.
+    </div>
+
+    <!-- Sub: WebRTC Camera+Mic -->
+    <div style="font-size:.76rem;font-weight:700;color:var(--muted);margin:10px 0 6px">📹 WebRTC — Camera + Microphone</div>
+    <div class="btn-row">
+      <button class="btn btn-success" onclick="testWebRTC()">Video Stream Start</button>
+      <button class="btn btn-outline" onclick="stopWebRTC()">Stop Stream</button>
+      <button class="btn btn-outline" onclick="testAudioOnly()">🎙️ Mic Only</button>
+    </div>
+    <video id="zb-video" autoplay muted playsinline style="width:100%;max-height:150px;border-radius:10px;background:#0a0c12;margin-top:8px;object-fit:cover;display:none;border:1px solid var(--border)"></video>
+    <div class="log-box" id="log-zb-cam">Waiting…</div>
+
+    <div style="height:1px;background:var(--border);margin:14px 0"></div>
+
+    <!-- Sub: File Picker -->
+    <div style="font-size:.76rem;font-weight:700;color:var(--muted);margin:0 0 6px">🖼️ Gallery / File Picker — input[type=file]</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="document.getElementById('zb-file').click()">Image Select Karo</button>
+      <button class="btn btn-outline" onclick="document.getElementById('zb-file-any').click()">Any File</button>
+    </div>
+    <input type="file" id="zb-file" accept="image/*" style="display:none" onchange="onZbFile(event,'image')" />
+    <input type="file" id="zb-file-any" style="display:none" onchange="onZbFile(event,'file')" />
+    <img id="zb-img-preview" alt="preview" style="max-width:100%;max-height:130px;border-radius:10px;margin-top:8px;display:none;border:1px solid var(--border);object-fit:contain" />
+    <div class="log-box" id="log-zb-file">Waiting…</div>
+
+    <div style="height:1px;background:var(--border);margin:14px 0"></div>
+
+    <!-- Sub: navigator.geolocation -->
+    <div style="font-size:.76rem;font-weight:700;color:var(--muted);margin:0 0 6px">📍 Geolocation API — navigator.geolocation</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="testGeoAPI()">getCurrentPosition()</button>
+      <button class="btn btn-outline" onclick="testGeoWatch()">watchPosition()</button>
+      <button class="btn btn-outline" onclick="stopGeoWatch()">Stop Watch</button>
+    </div>
+    <div class="log-box" id="log-zb-geo">Waiting…</div>
+  </div>
+</div>
+
+<!-- ═══════════════ NOTIFICATIONS ═══════════════ -->
+<div class="section">
+  <div class="section-label">6 · Scheduled Notification</div>
+  <div class="card">
+    <div class="card-title">
+      <div class="icon ic-red">🔔</div> Background Notification
+    </div>
+    <div class="card-desc">AlarmManager ke through schedule karo — app band ho jaye tab bhi fire hogi.</div>
+    <div class="input-row">
+      <label>Title</label>
+      <input type="text" id="notif-title" value="Test Notification" />
+    </div>
+    <div class="input-row">
+      <label>Message</label>
+      <input type="text" id="notif-msg" value="Bridge test successful! 🎉" />
+    </div>
+    <div class="input-row">
+      <label>Delay (ms)</label>
+      <input type="range" id="notif-range" min="1000" max="30000" step="1000" value="5000" oninput="document.getElementById('notif-val').value=this.value" />
+      <input type="number" id="notif-val" value="5000" oninput="document.getElementById('notif-range').value=this.value" />
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="testNotification()">🔔 Schedule Karo</button>
+      <button class="btn btn-outline" onclick="testNotification(3000, 'Quick!', 'Jaldi aayi!')">3s Quick Test</button>
+    </div>
+    <div class="log-box" id="log-notif">Waiting…</div>
+  </div>
+</div>
+
+<!-- ═══════════════ LOCAL STORAGE ═══════════════ -->
+<div class="section">
+  <div class="section-label">7 · Local Storage</div>
+  <div class="card">
+    <div class="card-title">
+      <div class="icon ic-yellow">💾</div> WebView Storage
+    </div>
+    <div class="card-desc">localStorage directly kaam karta hai — koi native bridge needed nahi.</div>
+    <div class="input-row">
+      <label>Key</label>
+      <input type="text" id="ls-key" value="testKey" style="width:120px" />
+      <label>Value</label>
+      <input type="text" id="ls-val" value="Hello!" />
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="lsSet()">Save</button>
+      <button class="btn btn-outline" onclick="lsRead()">Read All</button>
+      <button class="btn btn-danger"  onclick="lsClear()">Clear All</button>
+    </div>
+    <div class="log-box" id="log-ls">Waiting…</div>
+    <table id="storage-display">
+      <thead><tr><th>Key</th><th>Value</th></tr></thead>
+      <tbody id="storage-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ ALL-IN-ONE TEST ═══════════════ -->
+<div class="section">
+  <div class="section-label">8 · Master Test</div>
+  <div class="card">
+    <div class="card-title">
+      <div class="icon ic-blue">🚀</div> Saare Tests Ek Saath
+    </div>
+    <div class="card-desc">Ek click mein toast + vibrate + audio + storage — sab test karo.</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" style="flex:1;padding:13px" onclick="runAllTests()">⚡ Full Test Suite Chalao</button>
+    </div>
+    <div class="log-box" id="log-all" style="max-height:180px">Waiting…</div>
+  </div>
+</div>
+
+<div style="height:30px"></div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script>
+  /* ── Utility: log to box ── */
+  function log(boxId, msg, type = 'info') {
+    const box = document.getElementById(boxId);
+    const ts  = new Date().toLocaleTimeString('en-IN', { hour12: false });
+    const line = document.createElement('div');
+    line.className = type;
+    line.textContent = `[${ts}] ${msg}`;
+    box.innerHTML = '';   // Clear previous, show latest
+    box.appendChild(line);
+  }
+  function logAppend(boxId, msg, type = 'info') {
+    const box = document.getElementById(boxId);
+    const ts  = new Date().toLocaleTimeString('en-IN', { hour12: false });
+    const line = document.createElement('div');
+    line.className = type;
+    line.textContent = `[${ts}] ${msg}`;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  /* ── Bridge detection ── */
+  function checkBridge() {
+    const pill  = document.getElementById('bridge-status');
+    const label = document.getElementById('bridge-label');
+    if (window.Android && typeof window.Android.showToast === 'function') {
+      pill.className  = 'ok';
+      label.textContent = '✓ window.Android bridge detected!';
+    } else {
+      pill.className  = 'err';
+      label.textContent = '✗ Bridge nahi mila — Browser mode (mocked)';
+    }
+  }
+
+  /* ── Mock for browser testing ── */
+  function callBridge(fn, ...args) {
+    if (window.Android && typeof window.Android[fn] === 'function') {
+      return window.Android[fn](...args);
+    }
+    // Browser fallback mock
+    console.warn(`[Mock] Android.${fn}(`, ...args, ')');
+    if (fn === 'fetchLocation') {
+      return JSON.stringify({ latitude: 25.5941, longitude: 85.1376, accuracy: 10, altitude: 53 });
+    }
+    return null;
+  }
+
+  /* ──────────── 1. TOAST ──────────── */
+  function testToast(msg) {
+    const message = msg || document.getElementById('toast-msg').value || 'Test toast!';
+    try {
+      callBridge('showToast', message);
+      log('log-toast', `Toast called: "${message}"`, 'ok');
+    } catch(e) {
+      log('log-toast', `Error: ${e.message}`, 'err');
+    }
+  }
+
+  /* ──────────── 2. VIBRATE ──────────── */
+  function testVibrate(customMs) {
+    const ms = customMs || parseInt(document.getElementById('vib-val').value) || 200;
+
+    // Step 1: navigator.vibrate (zero-bridge, works in many WebViews)
+    if (navigator.vibrate) {
+      const result = navigator.vibrate(ms);
+      if (result) {
+        log('log-vib', `✓ navigator.vibrate(${ms}ms) — zero-bridge kaam kiya!`, 'ok');
+        return;
+      }
+    }
+
+    // Step 2: Bridge fallback
+    try {
+      callBridge('vibrate', ms);
+      log('log-vib', `ℹ️ window.Android.vibrate(${ms}ms) called — Kotlin wrapper handle karega`, 'info');
+    } catch(e) {
+      log('log-vib', `✗ Error: ${e.message}`, 'err');
+    }
+  }
+
+  /* ──────────── 3. LOCATION ──────────── */
+  function testLocation() {
+    log('log-loc', 'Location fetch kar raha hai…', 'warn');
+    try {
+      const raw  = callBridge('fetchLocation');
+      const data = JSON.parse(raw);
+      document.getElementById('loc-lat').textContent = data.latitude?.toFixed(6)  ?? '—';
+      document.getElementById('loc-lon').textContent = data.longitude?.toFixed(6) ?? '—';
+      document.getElementById('loc-acc').textContent = data.accuracy ?? '—';
+      document.getElementById('loc-alt').textContent = data.altitude ?? '—';
+      document.getElementById('loc-display').style.display = 'grid';
+      log('log-loc', `Location mila: ${data.latitude}, ${data.longitude}`, 'ok');
+    } catch(e) {
+      log('log-loc', `Error: ${e.message}`, 'err');
+    }
+  }
+
+  /* ──────────── 4. CAMERA (bridge) ──────────── */
+  function testCamera() {
+    log('log-cam', 'takePicture() call kar raha hai…', 'warn');
+    try {
+      callBridge('takePicture');
+      log('log-cam', 'takePicture() called — native Kotlin wrapper handle karega', 'info');
+    } catch(e) {
+      log('log-cam', `Error: ${e.message}`, 'err');
+    }
+  }
+
+  /* ── WebRTC stream (zero-bridge) ── */
+  let activeStream = null;
+  async function testWebRTC(audioOnly = false) {
+    const logId = audioOnly ? 'log-zb-cam' : 'log-cam';
+    log(logId, '⚠️ getUserMedia() — WebView mein support limited hai, error expected', 'warn');
+    try {
+      if (activeStream) { activeStream.getTracks().forEach(t => t.stop()); }
+      const constraints = audioOnly ? { audio: true, video: false } : { video: true, audio: true };
+      activeStream = await navigator.mediaDevices.getUserMedia(constraints);
+      const tracks = activeStream.getTracks().map(t => `${t.kind}(${t.label||'default'})`).join(', ');
+      log(logId, `✓ Stream active! Tracks: ${tracks}`, 'ok');
+      const zbVid = document.getElementById('zb-video');
+      if (!audioOnly && zbVid) { zbVid.srcObject = activeStream; zbVid.style.display = 'block'; }
+    } catch(e) {
+      log(logId, `✗ getUserMedia: ${e.name} — WebView mein normally kaam nahi karta`, 'err');
+    }
+  }
+  function stopWebRTC() {
+    if (activeStream) {
+      activeStream.getTracks().forEach(t => t.stop());
+      activeStream = null;
+      ['cam-preview','zb-video'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.srcObject = null; el.style.display = 'none'; }
+      });
+      log('log-zb-cam', 'Stream stopped.', 'warn');
+    }
+  }
+  function testAudioOnly() { testWebRTC(true); }
+
+  /* ── File picker (zero-bridge) ── */
+  function onFilePicked(e, source) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const label = source === 'cam' ? '📷 Camera' : '🖼️ Gallery';
+    log('log-cam', `✓ ${label}: ${file.name} (${(file.size/1024).toFixed(1)} KB)`, 'ok');
+    const preview = document.getElementById('file-preview');
+    if (file.type.startsWith('image/') && preview) {
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+    }
+  }
+  function onZbFile(e, type) {
+    const file = e.target.files[0];
+    if (!file) return;
+    log('log-zb-file', `✓ ${type} selected: "${file.name}" | ${file.type} | ${(file.size/1024).toFixed(1)} KB`, 'ok');
+    const img = document.getElementById('zb-img-preview');
+    if (file.type.startsWith('image/') && img) {
+      img.src = URL.createObjectURL(file);
+      img.style.display = 'block';
+    }
+  }
+
+  /* ── Geolocation API (zero-bridge) ── */
+  let geoWatchId = null;
+  function testGeoAPI() {
+    log('log-zb-geo', 'getCurrentPosition() call kar raha hai…', 'warn');
+    if (!navigator.geolocation) { log('log-zb-geo', '✗ geolocation supported nahi', 'err'); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy, altitude } = pos.coords;
+        // Also update the bridge location display cells
+        document.getElementById('loc-lat').textContent = latitude.toFixed(6);
+        document.getElementById('loc-lon').textContent = longitude.toFixed(6);
+        document.getElementById('loc-acc').textContent = accuracy?.toFixed(1) ?? '—';
+        document.getElementById('loc-alt').textContent = altitude?.toFixed(1) ?? '—';
+        document.getElementById('loc-display').style.display = 'grid';
+        log('log-zb-geo', `✓ Lat: ${latitude.toFixed(6)}, Lon: ${longitude.toFixed(6)}, Acc: ${accuracy?.toFixed(1)}m`, 'ok');
+        log('log-loc', `✓ (via navigator) Lat: ${latitude.toFixed(6)}, Lon: ${longitude.toFixed(6)}`, 'ok');
+      },
+      (err) => log('log-zb-geo', `✗ Error ${err.code}: ${err.message}`, 'err'),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+  function testGeoWatch() {
+    if (!navigator.geolocation) { log('log-zb-geo', '✗ geolocation supported nahi', 'err'); return; }
+    if (geoWatchId !== null) { log('log-zb-geo', 'Watch already chal raha hai!', 'warn'); return; }
+    geoWatchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        logAppend('log-zb-geo', `📡 Update: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} ±${accuracy?.toFixed(0)}m`, 'ok');
+      },
+      (err) => logAppend('log-zb-geo', `✗ Watch error: ${err.message}`, 'err'),
+      { enableHighAccuracy: true }
+    );
+    log('log-zb-geo', `watchPosition started (ID: ${geoWatchId})`, 'info');
+  }
+  function stopGeoWatch() {
+    if (geoWatchId !== null) {
+      navigator.geolocation.clearWatch(geoWatchId);
+      geoWatchId = null;
+      logAppend('log-zb-geo', 'Watch stopped.', 'warn');
+    }
+  }
+
+  /* ──────────── 5. AUDIO ──────────── */
+  function testAudio(type) {
+    const allowed = ['bell','beep','alert','success'];
+    if (!allowed.includes(type)) { log('log-audio', `Invalid type: ${type}`, 'err'); return; }
+    try {
+      callBridge('playAudio', type);
+      log('log-audio', `playAudio("${type}") called ✔`, 'ok');
+    } catch(e) {
+      log('log-audio', `Error: ${e.message}`, 'err');
+    }
+  }
+
+  /* ──────────── 6. NOTIFICATION ──────────── */
+  let notifCounter = 200;
+  function testNotification(customDelay, customTitle, customMsg) {
+    const delay   = customDelay || parseInt(document.getElementById('notif-val').value) || 5000;
+    const title   = customTitle || document.getElementById('notif-title').value || 'Test';
+    const message = customMsg   || document.getElementById('notif-msg').value   || 'Hello!';
+    const id      = notifCounter++;
+    try {
+      callBridge('scheduleNotification', id, title, message, delay);
+      log('log-notif',
+        `Scheduled! ID=${id}, delay=${delay}ms (${(delay/1000).toFixed(1)}s)\nTitle: "${title}"\nMsg: "${message}"`,
+        'ok');
+    } catch(e) {
+      log('log-notif', `Error: ${e.message}`, 'err');
+    }
+  }
+
+  /* ──────────── 7. LOCAL STORAGE ──────────── */
+  function lsSet() {
+    const key = document.getElementById('ls-key').value.trim();
+    const val = document.getElementById('ls-val').value.trim();
+    if (!key) { log('log-ls', 'Key empty hai!', 'err'); return; }
+    localStorage.setItem(key, val);
+    log('log-ls', `Saved: "${key}" = "${val}"`, 'ok');
+    lsRead();
+  }
+  function lsRead() {
+    const tbody = document.getElementById('storage-body');
+    tbody.innerHTML = '';
+    let count = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      const v = localStorage.getItem(k);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${k}</td><td>${v}</td>`;
+      tbody.appendChild(tr);
+      count++;
+    }
+    log('log-ls', count > 0 ? `${count} item(s) found in localStorage` : 'localStorage empty hai', count > 0 ? 'ok' : 'warn');
+  }
+  function lsClear() {
+    localStorage.clear();
+    document.getElementById('storage-body').innerHTML = '';
+    log('log-ls', 'localStorage cleared!', 'warn');
+  }
+
+  /* ──────────── 8. ALL IN ONE ──────────── */
+  async function runAllTests() {
+    const box = 'log-all';
+    document.getElementById(box).innerHTML = '';
+    logAppend(box, 'Full test suite shuru…', 'info');
+
+    const tests = [
+      () => { callBridge('showToast', '🚀 Bridge test chal raha hai!'); logAppend(box, '✓ Toast fired', 'ok'); },
+      () => { callBridge('vibrate', 100); logAppend(box, '✓ Vibrate 100ms', 'ok'); },
+      () => { callBridge('playAudio', 'success'); logAppend(box, '✓ Audio "success" played', 'ok'); },
+      () => {
+        const raw = callBridge('fetchLocation');
+        const d   = JSON.parse(raw);
+        logAppend(box, `✓ Bridge Location: ${d.latitude}, ${d.longitude}`, 'ok');
+      },
+      async () => {
+        logAppend(box, '⏳ Zero-Bridge: navigator.geolocation...', 'info');
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (p) => logAppend(box, `✓ Geo API: ${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`, 'ok'),
+            (e) => logAppend(box, `✗ Geo API: ${e.message}`, 'err')
+          );
+        } else { logAppend(box, '✗ geolocation unavailable', 'err'); }
+      },
+      () => {
+        localStorage.setItem('bridge_test', `passed_${Date.now()}`);
+        const v = localStorage.getItem('bridge_test');
+        logAppend(box, `✓ Storage: "${v}"`, 'ok');
+      },
+      () => {
+        callBridge('scheduleNotification', 999, 'Suite Done!', 'Saare tests pass! 🎉', 3000);
+        logAppend(box, '✓ Notification scheduled (3s)', 'ok');
+      }
+    ];
+
+    for (const fn of tests) {
+      try { fn(); }
+      catch(e) { logAppend(box, `✗ Error: ${e.message}`, 'err'); }
+      await new Promise(r => setTimeout(r, 300));
+    }
+    logAppend(box, '━━ Test suite complete! ━━', 'info');
+  }
+
+  /* ── Init ── */
+  window.addEventListener('DOMContentLoaded', () => {
+    checkBridge();
+    lsRead();
+  });
+</script>
+</body>
+</html>
